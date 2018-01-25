@@ -17,21 +17,14 @@ namespace Octris\Config;
  * @copyright   copyright (c) 2010-2018 by Harald Lapp
  * @author      Harald Lapp <harald@octris.org>
  */
-class Collection implements \Iterator, \ArrayAccess, \Serializable, \JsonSerializable, \Countable
+class Collection implements \IteratorAggregate, \ArrayAccess, \Serializable, \JsonSerializable, \Countable
 {
     /**
      * Data of collection.
      *
      * @type    array
      */
-    protected $data = array();
-
-    /**
-     * Position for iterator.
-     *
-     * @type    int
-     */
-    protected $position = 0;
+    protected $data = [];
 
     /**
      * Constructor.
@@ -54,55 +47,14 @@ class Collection implements \Iterator, \ArrayAccess, \Serializable, \JsonSeriali
     }
 
     /** Iterator **/
-
+    
     /**
-     * Return key of item.
-     *
-     * @return  string                                      Key of item.
+     * Return an iterator of stored configuration.
+     * 
+     * @return  \ArrayIterator          Instance of iterator.
      */
-    public function key()
-    {
-        return key($this->data);
-    }
-
-    /**
-     * Return value of item.
-     *
-     * @return  mixed                                       Value of item.
-     */
-    public function current()
-    {
-        return current($this->data);
-    }
-
-    /**
-     * Move pointer to the next item but skip sections.
-     *
-     * @return  mixed                                       Value of item.
-     */
-    public function next()
-    {
-        $item = next($this->data);
-        ++$this->position;
-
-        return $item;
-    }
-
-    /**
-     * Rewind collection.
-     */
-    public function rewind()
-    {
-        reset($this->data);
-        $this->position = 0;
-    }
-
-    /**
-     * Test if position is valid.
-     */
-    public function valid()
-    {
-        return (count($this->data) > $this->position);
+    public function getIterator() {
+        return new \ArrayIterator($this->data);
     }
 
     /** ArrayAccess **/
