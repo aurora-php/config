@@ -43,7 +43,7 @@ class Filter extends \FilterIterator
     public function __construct(\Octris\Config $config, $prefix, $clean = true)
     {
         $this->prefix = rtrim($prefix, '.');
-        $this->clean  = $clean;
+        $this->clean = $clean;
 
         if (isset($config[$this->prefix])) {
             $tmp = new \ArrayIterator($config[$this->prefix]);
@@ -63,33 +63,7 @@ class Filter extends \FilterIterator
      */
     public function key()
     {
-        return (!$this->clean
-                ? $this->prefix . '.'
-                : '') . parent::key();
-    }
-
-    /**
-     * Get copy of filtered array.
-     *
-     * @return  array               Filtered array.
-     */
-    public function getArrayCopy()
-    {
-        $this->rewind();
-
-        $data = array();
-
-        if ($this->clean) {
-            $data = iterator_to_array($this);
-        } else {
-            foreach ($this as $k => $v) {
-                $data[$this->prefix . '.' . $k] = $v;
-            }
-        }
-
-        $this->rewind();
-
-        return $data;
+        return (!$this->clean ? $this->prefix . '.' : '') . parent::key();
     }
 
     /**
