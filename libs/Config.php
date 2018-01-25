@@ -28,13 +28,6 @@ class Config extends \Octris\Config\Collection
     protected $format;
 
     /**
-     * Modified data.
-     * 
-     * @type    array
-     */
-    protected $overlay = [];
-
-    /**
      * Constructor.
      *
      * @param   array                           $files      One or multiple files to load and merge.
@@ -89,22 +82,32 @@ class Config extends \Octris\Config\Collection
      * Save configuration file to destination.
      *
      * @param   string                  $file               Destination to save configuration to.
-     * @param   bool                    $create_dir         Whether to create directory if it does not exist.
      * @return  bool                                        Returns TRUE on success, otherwise FALSE.
      */
-    public function save($file, $create_dir = false)
+    public function save($file)
     {
-        $path = dirname($file);
-
-        if (!is_dir($path)) {
-            if ($create_dir) {
-                mkdir($path, 0755, true);
-            } else {
-                return false;
+        $intersect = function(array $data1, array $data2) use (&$intersect) {
+            $data1 = array_intersect_key($data1, $data2);
+            
+            foreach ($data1 as $key => &$value) {
+                if (is_array($value) && is_array($data2[$key])) {
+                    $value = $intersect($value, $data2[$key]);
+                }
             }
-        }
+            
+            return $data1;
+        };
 
-        return file_put_contents($file, $this->format->encodeData($this->data));
+        if (is_readable($file)) {
+            // merge modified data into existing config file
+            $data = $this->format->decodeData(file_get_contents($file));
+            $data = $intersect($data, $this->data);
+            $data = array_replace_recursive($data, $this->overlay);
+        } else {
+            $data =& $this->overlay;
+        }
+        
+        return file_put_contents($file, $this->format->encodeData($data));
     }
 
     /**
