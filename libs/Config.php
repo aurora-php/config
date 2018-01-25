@@ -28,18 +28,20 @@ class Config extends \Octris\Config\Collection
     protected $format;
 
     /**
-     * Constructor.
+     * Constructor. It perfectly fine to load no configuration file by providing an empty array
+     * as first argument. Multiple files can be specified as array, single file can specified as
+     * a string, too.
      *
-     * @param   array                           $files      Optional files to load and merge.
+     * @param   array|strin                     $files      Optional files to load and merge.
      * @param   \Octris\Config\FormatInterface  $format     Format encoder/decoder class.
      */
-    public function __construct(array $files, \Octris\Config\FormatInterface $format)
+    public function __construct($files, \Octris\Config\FormatInterface $format)
     {
         parent::__construct([]);
 
         $this->format = $format;
         
-        foreach ($this->files as $file) {
+        foreach ((array)$files as $file) {
             if (preg_match('/^~([a-z][-a-z0-9]*|)(\/.+)$/i', $file, $match)) {
                 $file = $this->getHome($match[1]) . $match[2];
             }
