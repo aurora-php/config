@@ -30,7 +30,7 @@ class Config extends \Octris\Config\Collection
     /**
      * Constructor.
      *
-     * @param   array                           $files      One or multiple files to load and merge.
+     * @param   array                           $files      Optional files to load and merge.
      * @param   \Octris\Config\FormatInterface  $format     Format encoder/decoder class.
      */
     public function __construct(array $files, \Octris\Config\FormatInterface $format)
