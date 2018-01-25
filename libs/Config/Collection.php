@@ -38,7 +38,7 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Serializable, \Js
      *
      * @param   mixed       $data               Optional data to initialize collection with.
      */
-    public function __construct(array $data)
+    public function __construct(array $data = [])
     {
         $this->data = $data;
     }

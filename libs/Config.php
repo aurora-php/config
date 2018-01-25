@@ -37,7 +37,7 @@ class Config extends \Octris\Config\Collection
      */
     public function __construct($files, \Octris\Config\FormatInterface $format)
     {
-        parent::__construct([]);
+        parent::__construct();
 
         $this->format = $format;
         
