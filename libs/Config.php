@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the 'octris/core' package.
+ * This file is part of the 'octris/config' package.
  *
  * (c) Harald Lapp <harald@octris.org>
  *
@@ -9,49 +9,76 @@
  * file that was distributed with this source code.
  */
 
-namespace Octris\Core;
-
-use \Octris\Core\App as app;
-use \Octris\Core\Registry as registry;
+namespace Octris;
 
 /**
- * handles application configuration
+ * Application configuration library for the OCTRiS framework supporting 
+ * multiple formats.
  *
- * @copyright   (c) 2010-2016 by Harald Lapp
+ * @copyright   (c) 2010-2018 by Harald Lapp
  * @author      Harald Lapp <harald@octris.org>
- * @todo        other fileformats: json, ini, conf, xml ... loader?
- * @todo        remove duplicate code
  */
-class Config extends \Octris\Core\Type\Collection
+class Config extends \Octris\Config\Collection
 {
     /**
      * Name of configuration file.
      *
      * @type    string
      */
-    protected $name = '';
+    protected $name;
+
+    /**
+     * Home directory of user.
+     *
+     * @type    string
+     */
+    protected $home;
+    
+    /**
+     * Instance of format encoder/decoder class.
+     *
+     * @type    \Octris\Config\FormatInterface
+     */
+    protected $format;
 
     /**
      * Constructor.
      *
-     * @param   string  $name       Name of configuration file.
+     * @param   string                          $name       Name of configuration file.
+     * @param   \Octris\Config\FormatInterface  $format     Format encoder/decoder class.
      */
-    public function __construct($name)
+    public function __construct($name, \Octris\Config\FormatInterface $format)
     {
         $this->name = $name;
+        $this->home = self::getHome();
+        $this->format = $format;
 
         parent::__construct($this->load($name));
     }
 
     /**
+     * Determine HOME directory.
+     *
+     * @return  string                                      Home directory.
+     */
+    public static function getHome()
+    {
+        if (($home = getenv('HOME')) === '') {
+            $home = posix_getpwuid(posix_getuid())['dir'];
+        }
+
+        return $home;
+    }
+
+    /**
      * Filter configuration for prefix.
      *
-     * @param   string                              $prefix     Prefix to use for filter.
+     * @param   string                          $prefix     Prefix to use for filter.
      * @return  \Octris\Core\Config\Filter                  Filter iterator.
      */
     public function filter($prefix)
     {
-        return new \Octris\Core\Config\Filter($this, $prefix);
+        return new \Octris\Config\Filter($this, $prefix);
     }
 
     /**
@@ -64,7 +91,7 @@ class Config extends \Octris\Core\Type\Collection
     public function save($file = '')
     {
         if ($file == '') {
-            $path = \Octris\Core\Os::getHome() . '/.' . OCTRIS_APP_VENDOR . '/' . OCTRIS_APP_NAME;
+            $path = $this->home . '/.' . OCTRIS_APP_VENDOR . '/' . OCTRIS_APP_NAME;
 
             $file = $path . '/' . $this->name . '.yml';
         } else {
@@ -121,7 +148,7 @@ class Config extends \Octris\Core\Type\Collection
      *
      * @param   string                              $file       File to load and create configuration object from.
      * @param   string                              $name       Optional name of configuration file to create.
-     * @return  \Octris\Core\Config|bool                        Returns an instance of the config class if the
+     * @return  \Octris\Config|bool                             Returns an instance of the config class if the
      *                                                          configuration file.
      *                                                          was created successful, otherwise 'false' is returned.
      * @todo    error handling
@@ -186,41 +213,5 @@ class Config extends \Octris\Core\Type\Collection
         }
 
         return $cfg;
-    }
-
-    /** ArrayAccess **/
-
-    /**
-     * Get value from configuration. Allows access by dot-notation.
-     *
-     * @param   string      $offs       Offset to get value from.
-     * @return  mixed                   Value stored at offset, arrays are returned as Subcollection.
-     */
-    public function offsetGet($offs)
-    {
-        if (strpos($offs, '.') !== false) {
-            $parts = explode('.', preg_replace('/\.+/', '.', trim($offs, '.')));
-            $ret   =& $this->data;
-
-            for ($i = 0, $cnt = count($parts); $i < $cnt; ++$i) {
-                if (!array_key_exists($parts[$i], $ret)) {
-                    trigger_error('Undefined index "' . $parts[$i] . '" in "' . $offs . '".');
-
-                    return null;
-                } else {
-                    $ret =& $ret[$parts[$i]];
-                }
-            }
-        } else {
-            if (!array_key_exists($offs, $this->data)) {
-                trigger_error('Undefined index "' . $offs . '".');
-
-                return null;
-            }
-
-            $ret =& $this->data[$offs];
-        }
-
-        return $ret;
     }
 }
