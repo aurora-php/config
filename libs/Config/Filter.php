@@ -46,7 +46,7 @@ class Filter extends \FilterIterator
         $this->clean  = $clean;
 
         if (isset($config[$this->prefix])) {
-            $tmp = new \ArrayIterator(\Octris\Config\Collection::normalize($config[$this->prefix]));
+            $tmp = new \ArrayIterator($config[$this->prefix]);
         } else {
             $tmp = new \ArrayIterator();
         }
