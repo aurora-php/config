@@ -9,14 +9,12 @@
  * file that was distributed with this source code.
  */
 
-namespace Octris\Core\Type;
-
-require_once(__DIR__ . '/Collection/functions.php');
+namespace Octris\Type;
 
 /**
  * Collection type. Implements special access on array objects.
  *
- * @copyright   copyright (c) 2010-2016 by Harald Lapp
+ * @copyright   copyright (c) 2010-2018 by Harald Lapp
  * @author      Harald Lapp <harald@octris.org>
  */
 class Collection implements \Iterator, \ArrayAccess, \Serializable, \JsonSerializable, \Countable
@@ -40,14 +38,9 @@ class Collection implements \Iterator, \ArrayAccess, \Serializable, \JsonSeriali
      *
      * @param   mixed       $data               Optional data to initialize collection with.
      */
-    public function __construct($data = array())
+    public function __construct(array $data)
     {
-        if (($tmp = Collection\Normalize($data)) === false) {
-            // not an array
-            throw new \Exception('don\'t know how to handle parameter of type "' . gettype($data) . '"');
-        }
-
-        $this->data = $tmp;
+        $this->data = $data;
     }
 
     /**
@@ -58,113 +51,6 @@ class Collection implements \Iterator, \ArrayAccess, \Serializable, \JsonSeriali
     public function __debugInfo()
     {
         return $this->data;
-    }
-
-    /**
-     * Exchange the data array for another one.
-     *
-     * @param   mixed       $value      The new array or object to exchange to current data with.
-     * @return  array                   Data stored in collection
-     */
-    public function exchangeArray($value)
-    {
-        if (($tmp = Collection\Normalize($value)) === false) {
-            // not an array
-            throw new \Exception('Unable to handle parameter of type "' . gettype($tmp) . '".');
-        } else {
-            $return = $this->data;
-            $this->data = $tmp;
-        }
-
-        return $return;
-    }
-
-    /**
-     * Return contents of collection as array.
-     *
-     * @return  array                                   Contents of collection.
-     */
-    public function getArrayCopy()
-    {
-        return $this->data;
-    }
-
-    /** Sorting **/
-
-    /**
-     * Sort the entries by value.
-     *
-     * @param   Collator    $collator       Optional collator to use for comparision.
-     */
-    public function asort(\Collator $collator = null)
-    {
-        $collator = $collator ?: new \Collator(\Octris\Core\L10n::getInstance()->getLocale());
-
-        uasort($this->data, function ($string1, $string2) use ($collator) {
-            return \Octris\Core\Type\Text::strcmp($string1, $string2, $collator);
-        });
-    }
-
-    /**
-     * Sort the entries by key.
-     *
-     * @param   Collator    $collator       Optional collator to use for comparision.
-     */
-    public function ksort(\Collator $collator = null)
-    {
-        $collator = $collator ?: new \Collator(\Octris\Core\L10n::getInstance()->getLocale());
-
-        uksort($this->data, function ($string1, $string2) use ($collator) {
-            return \Octris\Core\Type\Text::strcmp($string1, $string2, $collator);
-        });
-    }
-
-    /**
-     * Sort the entries with a user-defined comparison function and maintain key association.
-     *
-     * @param   callable    $callback                   The callback comparision function.
-     */
-    public function uasort(callable $callback)
-    {
-        uasort($this->data, $callback);
-    }
-
-    /**
-     * Sort the entries by keys using a user-defined comparison function.
-     *
-     * @param   callable    $callback                   The callback comparison function.
-     */
-    public function uksort(callable $callback)
-    {
-        uksort($this->data, $callback);
-    }
-
-    /**
-     * Sort an array using a case insensitive "natural order" algorithm.
-     *
-     * @param   Collator    $collator       Optional collator to use for comparision.
-     */
-    public function natcasesort(\Collator $collator = null)
-    {
-        $collator = $collator ?: new \Collator(\Octris\Core\L10n::getInstance()->getLocale());
-
-        uasort($this->data, function ($string1, $string2) use ($collator) {
-            return \Octris\Core\Type\Text::strnatcasecmp($string1, $string2, $collator);
-        });
-    }
-
-    /**
-     * Sort entries using a "natural order" algorithm.
-     *
-     * @param   Collator    $collator       Optional collator to use for comparision.
-     */
-    public function natsort(\Collator $collator = null)
-    {
-        $collator = $collator ?: new \Collator(\Octris\Core\L10n::getInstance()->getLocale());
-
-        uasort($this->data, function ($string1, $string2) use ($collator) {
-            return \Octris\Core\Type\Text::strnatcmp($string1, $string2, $collator);
-        });
     }
 
     /** Iterator **/
@@ -222,7 +108,7 @@ class Collection implements \Iterator, \ArrayAccess, \Serializable, \JsonSeriali
     /** ArrayAccess **/
 
     /**
-     * Get value from collection. Allows access by dot-notation.
+     * Get value from configuration. Allows access by dot-notation.
      *
      * @param   string      $offs       Offset to get value from.
      * @return  mixed                   Value stored at offset, arrays are returned as Subcollection.
@@ -252,9 +138,7 @@ class Collection implements \Iterator, \ArrayAccess, \Serializable, \JsonSeriali
             $ret =& $this->data[$offs];
         }
 
-        return (is_array($ret)
-                ? new \Octris\Core\Type\Collection\Subcollection($ret)
-                : $ret);
+        return $ret;
     }
 
     /**
