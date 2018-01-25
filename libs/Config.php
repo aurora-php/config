@@ -56,9 +56,9 @@ class Config extends \Octris\Config\Collection
     {
         if (preg_match('/^~([a-z][-a-z0-9]*|)(\/.+)$/i', $path, $match)) {
             if ($match[1] === '') {
-                $info = posix_getpwnam($name); //['dir'];
+                $info = posix_getpwnam($match[1]);
             } elseif (($home = getenv('HOME')) === '') {
-                $info = posix_getpwuid(posix_getuid()); // ['dir'];
+                $info = posix_getpwuid(posix_getuid());
             }
 
             if ($info && isset($info['dir']) && $info['dir'] !== '' && is_dir($info['dir'])) {
