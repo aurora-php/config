@@ -42,31 +42,34 @@ class Config extends \Octris\Config\Collection
         $this->format = $format;
         
         foreach ((array)$files as $file) {
-            if (preg_match('/^~([a-z][-a-z0-9]*|)(\/.+)$/i', $file, $match)) {
-                $file = $this->getHome($match[1]) . $match[2];
-            }
-            
-            if (file_exists($file)) {
-                $this->load($file);
-            }
+            $this->load($file);
         }
     }
 
     /**
-     * Determine HOME directory.
+     * Normalize path by expanding ~ prefixes.
      *
-     * @param   string                          $name       Optional name of user to return home directory of.
-     * @return  string                                      Home directory.
+     * @param   string                          $path       Path to normalize.
+     * @return  string|bool                                 Normalized path or false if path couldn't be normalized
      */
-    protected function getHome($name = '')
+    public static function normalizePath($path)
     {
-        if ($name === '') {
-            $home = posix_getpwnam($name)['dir'];
-        } elseif (($home = getenv('HOME')) === '') {
-            $home = posix_getpwuid(posix_getuid())['dir'];
-        }
+        if (preg_match('/^~([a-z][-a-z0-9]*|)(\/.+)$/i', $path, $match)) {
+            if ($match[1] === '') {
+                $info = posix_getpwnam($name); //['dir'];
+            } elseif (($home = getenv('HOME')) === '') {
+                $info = posix_getpwuid(posix_getuid()); // ['dir'];
+            }
 
-        return $home;
+            if ($info && isset($info['dir']) && $info['dir'] !== '' && is_dir($info['dir'])) {
+                $path = $info['dir'] . $match[2];
+            } else {
+                $path = false;
+            }
+        }
+        
+
+        return $path;
     }
 
     /**
@@ -100,6 +103,10 @@ class Config extends \Octris\Config\Collection
             return $data1;
         };
 
+        if (!($file = self::normalizePath($file))) {
+            throw new \Exception('Unable to write file "' . $file . '"');
+        }
+
         if (is_readable($file)) {
             // merge modified data into existing config file
             $data = $this->format->decodeData(file_get_contents($file));
@@ -119,7 +126,9 @@ class Config extends \Octris\Config\Collection
      */
     public function load($file)
     {
-        if (is_readable($file)) {
+        $file = self::normalizePath($file);
+        
+        if ($file !== false && is_readable($file)) {
             $data = $this->format->decodeData(file_get_contents($file));
             
             $this->data = array_replace_recursive($this->data, $data);
