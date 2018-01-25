@@ -34,7 +34,7 @@ class Yaml implements \Octris\Config\FormatInterface
      */
     public function decodeData($data)
     {
-        return yaml_parse($data)
+        return yaml_parse($data);
     }
     
     /**

@@ -34,7 +34,7 @@ class Json implements \Octris\Config\FormatInterface
      */
     public function decodeData($data)
     {
-        return json_decode($data, true)
+        return json_decode($data, true);
     }
     
     /**
