@@ -21,20 +21,6 @@ namespace Octris;
 class Config extends \Octris\Config\Collection
 {
     /**
-     * Name of configuration file.
-     *
-     * @type    string
-     */
-    protected $name;
-
-    /**
-     * Home directory of user.
-     *
-     * @type    string
-     */
-    protected $home;
-    
-    /**
      * Instance of format encoder/decoder class.
      *
      * @type    \Octris\Config\FormatInterface
@@ -42,28 +28,46 @@ class Config extends \Octris\Config\Collection
     protected $format;
 
     /**
+     * Modified data.
+     * 
+     * @type    array
+     */
+    protected $overlay = [];
+
+    /**
      * Constructor.
      *
-     * @param   string                          $name       Name of configuration file.
+     * @param   array                           $files      One or multiple files to load and merge.
      * @param   \Octris\Config\FormatInterface  $format     Format encoder/decoder class.
      */
-    public function __construct($name, \Octris\Config\FormatInterface $format)
+    public function __construct(array $files, \Octris\Config\FormatInterface $format)
     {
-        $this->name = $name;
-        $this->home = self::getHome();
-        $this->format = $format;
+        parent::__construct([]);
 
-        parent::__construct($this->load($name));
+        $this->format = $format;
+        
+        foreach ($this->files as $file) {
+            if (preg_match('/^~([a-z][-a-z0-9]*|)(\/.+)$/i', $file, $match)) {
+                $file = $this->getHome($match[1]) . $match[2];
+            }
+            
+            if (file_exists($file)) {
+                $this->load($file);
+            }
+        }
     }
 
     /**
      * Determine HOME directory.
      *
+     * @param   string                          $name       Optional name of user to return home directory of.
      * @return  string                                      Home directory.
      */
-    public static function getHome()
+    protected function getHome($name = '')
     {
-        if (($home = getenv('HOME')) === '') {
+        if ($name === '') {
+            $home = posix_getpwnam($name)['dir'];
+        } elseif (($home = getenv('HOME')) === '') {
             $home = posix_getpwuid(posix_getuid())['dir'];
         }
 
@@ -82,136 +86,38 @@ class Config extends \Octris\Config\Collection
     }
 
     /**
-     * Save configuration file to destination. if destination is not
-     * specified, try to save in ~/.<OCTRIS_APP_VENDOR>/<OCTRIS_APP_NAME>/<name>.yml
+     * Save configuration file to destination.
      *
-     * @param   string  $file       Optional destination to save configuration to.
-     * @return  bool                Returns TRUE on success, otherwise FALSE.
+     * @param   string                  $file               Destination to save configuration to.
+     * @param   bool                    $create_dir         Whether to create directory if it does not exist.
+     * @return  bool                                        Returns TRUE on success, otherwise FALSE.
      */
-    public function save($file = '')
+    public function save($file, $create_dir = false)
     {
-        if ($file == '') {
-            $path = $this->home . '/.' . OCTRIS_APP_VENDOR . '/' . OCTRIS_APP_NAME;
-
-            $file = $path . '/' . $this->name . '.yml';
-        } else {
-            $path = dirname($file);
-        }
+        $path = dirname($file);
 
         if (!is_dir($path)) {
-            mkdir($path, 0755, true);
+            if ($create_dir) {
+                mkdir($path, 0755, true);
+            } else {
+                return false;
+            }
         }
 
-        return file_put_contents($file, yaml_emit($this->getArrayCopy()));
+        return file_put_contents($file, $this->format->encodeData($this->data));
     }
 
     /**
-     * Test whether a configuration file exists.
+     * Load configuration file and merge data.
      *
-     * @param   string                              $name       Optional name of configuration file to look for.
-     * @return  bool                                            Returns true if the configuration file exists.
+     * @param   string                                     $file       Name of file to load.
      */
-    public static function exists($name = 'config')
+    public function load($file)
     {
-        $return = false;
-
-        // tests
-        do {
-            $path = OCTRIS_APP_BASE . '/etc/';
-            $file = $path . '/' . $name . '.yml';
-
-            if (($return = (is_file($file) && is_readable($file)))) {
-                break;
-            }
-
-            $file = $path . '/' . $name . '_local.yml';
-
-            if (($return = (is_file($file) && is_readable($file)))) {
-                break;
-            }
-
-            $path = \Octris\Core\Os::getHome() . '/.' . OCTRIS_APP_VENDOR . '/' . OCTRIS_APP_NAME;
-
-            $file = $path . '/' . $name . '.yml';
-
-            if (($return = (is_file($file) && is_readable($file)))) {
-                break;
-            }
-        } while (false);
-
-        return $return;
-    }
-
-    /**
-     * Create a configuration from a specified file. The configuration file will be stored in
-     * ~/.<OCTRIS_APP_VENDOR>/<OCTRIS_APP_NAME>/<name>.yml.
-     *
-     * @param   string                              $file       File to load and create configuration object from.
-     * @param   string                              $name       Optional name of configuration file to create.
-     * @return  \Octris\Config|bool                             Returns an instance of the config class if the
-     *                                                          configuration file.
-     *                                                          was created successful, otherwise 'false' is returned.
-     * @todo    error handling
-     */
-    public static function create($file, $name = 'config')
-    {
-        $return = false;
-
-        if (is_file($file) && (yaml_parse_file($file) !== false)) {
-            $path = \Octris\Core\Os::getHome() . '/.' . OCTRIS_APP_VENDOR . '/' . OCTRIS_APP_NAME;
-
-            if (!is_dir($path)) {
-                mkdir($path, 0777, true);
-            }
-
-            copy($file, $path . '/' . $name . '.yml');
-
-            $return = new static($name);
+        if (is_readable($file)) {
+            $data = $this->format->decodeData(file_get_contents($file));
+            
+            $this->data = array_replace_recursive($this->data, $data);
         }
-
-        return $return;
-    }
-
-    /**
-     * Load configuration file. The loader looks in the following places,
-     * loads the configuration file and merges them in the specified lookup order:
-     *
-     * - <OCTRIS_APP_BASE>/etc/<name>.yml
-     * - <OCTRIS_APP_BASE>/etc/<name>_local.yml
-     * - ~/.<OCTRIS_APP_VENDOR>/<OCTRIS_APP_NAME>/<name>.yml
-     *
-     * whereat the configuration file name -- in this example 'config' -- may be overwritten by the first parameter.
-     *
-     * @param   string                                     $name       Optional name of configuration file to load.
-     * @return  \Octris\Core\Type\Collection                           Contents of the configuration file.
-     */
-    protected function load($name = 'config')
-    {
-        $cfg = array();
-
-        // load default config file
-        $path = OCTRIS_APP_BASE . '/etc/';
-        $file = $path . '/' . $name . '.yml';
-
-        if (is_readable($file) && ($tmp = yaml_parse_file($file)) && !is_null($tmp)) {
-            $cfg = array_replace_recursive($cfg, $tmp);
-        }
-
-        // load local config file
-        $file = $path . '/' . $name . '_local.yml';
-
-        if (is_readable($file) && ($tmp = yaml_parse_file($file)) && !is_null($tmp)) {
-            $cfg = array_replace_recursive($cfg, $tmp);
-        }
-
-        // load global framework configuration
-        $path = \Octris\Core\Os::getHome() . '/.' . OCTRIS_APP_VENDOR . '/' . OCTRIS_APP_NAME;
-        $file = $path . '/' . $name . '.yml';
-
-        if (is_readable($file) && ($tmp = yaml_parse_file($file)) && !is_null($tmp)) {
-            $cfg = array_replace_recursive($cfg, $tmp);
-        }
-
-        return $cfg;
     }
 }
