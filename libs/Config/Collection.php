@@ -1,7 +1,7 @@
 <?php
 
 /*
- * This file is part of the 'octris/core' package.
+ * This file is part of the 'octris/config' package.
  *
  * (c) Harald Lapp <harald@octris.org>
  *
@@ -9,7 +9,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Octris\Type;
+namespace Octris\Config;
 
 /**
  * Collection type. Implements special access on array objects.
