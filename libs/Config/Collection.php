@@ -69,7 +69,7 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Serializable, \Js
     {
         if (strpos($offs, '.') !== false) {
             $parts = explode('.', preg_replace('/\.+/', '.', trim($offs, '.')));
-            $ret   =& $this->data;
+            $ret =& $this->data;
 
             for ($i = 0, $cnt = count($parts); $i < $cnt; ++$i) {
                 if (!array_key_exists($parts[$i], $ret)) {
@@ -106,11 +106,11 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Serializable, \Js
             $this->data[] = $value;
         } elseif (strpos($offs, '.') !== false) {
             $parts = explode('.', preg_replace('/\.+/', '.', trim($offs, '.')));
-            $ret   =& $this->data;
+            $ret =& $this->data;
 
             for ($i = 0, $cnt = count($parts); $i < $cnt; ++$i) {
                 if (!array_key_exists($parts[$i], $ret)) {
-                    $ret[$parts[$i]] = array();
+                    $ret[$parts[$i]] = [];
                 }
 
                 $ret =& $ret[$parts[$i]];
@@ -132,7 +132,7 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Serializable, \Js
     {
         if (strpos($offs, '.') !== false) {
             $parts = explode('.', preg_replace('/\.+/', '.', trim($offs, '.')));
-            $ret   =& $this->data;
+            $ret =& $this->data;
 
             for ($i = 0, $cnt = count($parts); $i < $cnt; ++$i) {
                 if (!($return = array_key_exists($parts[$i], $ret))) {
@@ -157,7 +157,7 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Serializable, \Js
     {
         if (strpos($offs, '.') !== false) {
             $parts = explode('.', preg_replace('/\.+/', '.', trim($offs, '.')));
-            $ret   =& $this->data;
+            $ret =& $this->data;
 
             for ($i = 0, $cnt = count($parts); $i < $cnt; ++$i) {
                 if (!($return = array_key_exists($parts[$i], $ret))) {
