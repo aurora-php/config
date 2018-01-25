@@ -27,6 +27,13 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Serializable, \Js
     protected $data = [];
 
     /**
+     * Added data.
+     * 
+     * @type    array
+     */
+    protected $overlay = [];
+
+    /**
      * Constructor.
      *
      * @param   mixed       $data               Optional data to initialize collection with.
@@ -104,21 +111,29 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Serializable, \Js
         if (is_null($offs)) {
             // $...[] =
             $this->data[] = $value;
+            $this->overlay[] = $value;
         } elseif (strpos($offs, '.') !== false) {
             $parts = explode('.', preg_replace('/\.+/', '.', trim($offs, '.')));
-            $ret =& $this->data;
+            $data =& $this->data;
+            $overlay =& $this->overlay;
 
             for ($i = 0, $cnt = count($parts); $i < $cnt; ++$i) {
-                if (!array_key_exists($parts[$i], $ret)) {
-                    $ret[$parts[$i]] = [];
+                if (!array_key_exists($parts[$i], $data)) {
+                    $data[$parts[$i]] = [];
+                }
+                if (!array_key_exists($parts[$i], $overlay)) {
+                    $overlay[$parts[$i]] = [];
                 }
 
-                $ret =& $ret[$parts[$i]];
+                $data =& $data[$parts[$i]];
+                $overlay =& $overlay[$parts[$i]];
             }
 
-            $ret = $value;
+            $data = $value;
+            $overlay = $value;
         } else {
             $this->data[$offs] = $value;
+            $this->overlay[$pffs] = $value;
         }
     }
 
@@ -157,21 +172,32 @@ class Collection implements \IteratorAggregate, \ArrayAccess, \Serializable, \Js
     {
         if (strpos($offs, '.') !== false) {
             $parts = explode('.', preg_replace('/\.+/', '.', trim($offs, '.')));
-            $ret =& $this->data;
+            $data =& $this->data;
+            $overlay =& $this->overlay;
+            $skip_overlay = false;
 
             for ($i = 0, $cnt = count($parts); $i < $cnt; ++$i) {
-                if (!($return = array_key_exists($parts[$i], $ret))) {
+                if (!(array_key_exists($parts[$i], $data))) {
                     break;
                 }
 
                 if ($i == $cnt - 1) {
-                    unset($ret[$parts[$i]]);
+                    unset($data[$parts[$i]]);
+                    
+                    if (!$skip_overlay) {
+                    unset($overlay[$parts[$i]]);
+                    }
                 } else {
-                    $ret =& $ret[$parts[$i]];
+                    $data =& $data[$parts[$i]];
+                    
+                    if (!$skip_overlay && !($skip_overlay = !isset($overlay[$parts[$i]]))) {
+                        $overlay =& $overlay[$parts[$i]];
+                    }
                 }
             }
         } else {
             unset($this->data[$offs]);
+            unset($this->overlay[$offs]);
         }
     }
 
