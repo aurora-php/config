@@ -1,7 +1,7 @@
 {
     "name":         "octris/config",
     "type":         "library",
-    "description":  "Config file library for OCTRiS based applications.",
+    "description":  "Config handling component.",
     "keywords":     [],
     "homepage":     "https://github.com/octris/config",
     "license":      "BSD-3-Clause",
@@ -13,7 +13,14 @@
     }],
 
     "require":      {
-        "php":          ">=5.6.0"
+        "php": ">=7.0",
+
+        "octris/propertycollection": "^2.0"
+    },
+
+    "suggest":      {
+        "ext-json": "Needed to support JSON format.",
+        "ext-yaml": "Needed to support YAML format."
     },
 
     "autoload":     {
