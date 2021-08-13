@@ -15,7 +15,7 @@
     "require":      {
         "php": ">=7.1",
 
-        "octris/propertycollection": "^2.0"
+        "octris/propertycollection": "dev-master"
     },
 
     "suggest":      {
