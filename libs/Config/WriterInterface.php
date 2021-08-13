@@ -28,7 +28,7 @@ interface WriterInterface
      * @param   array       $data
      * @throws  CannotWriteFileException
      */
-    public function saveFile(string $filename, array $data);
+    public function saveFile(string $filename, array $data): void;
 
     /**
      * Save data to string.

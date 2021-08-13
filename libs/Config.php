@@ -35,7 +35,7 @@ class Config extends \Octris\PropertyCollection
      *
      * @param   array   $data
      */
-    public function merge(array $data)
+    public function merge(array $data): void
     {
         $this->data = array_replace_recursive($this->data, $data);
     }
