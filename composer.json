@@ -12,10 +12,14 @@
         "homepage":     "http://www.octris.org/"
     }],
 
+    "repositories": [
+        { "type": "composer", "url": "https://octris.org/composer/" }
+    ],
+
     "require":      {
         "php": ">=7.1",
 
-        "octris/propertycollection": "dev-master"
+        "octris/propertycollection": "^0.1.0"
     },
 
     "suggest":      {
